@@ -1,3 +1,7 @@
 EVENT_API = 'https://api.github.com/repos/vocaned/webhook/events'
 GH_TOKEN = ''
 DISCORD_WEBHOOK = ''
+
+REPO_BLACKLIST = [ ]
+EVENT_BLACKLIST = [ ]
+
