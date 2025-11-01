@@ -15,7 +15,7 @@ repo_cache = {}
 
 # Skip events that happened before script was ran
 latest_event: datetime = datetime.now(tz=timezone.utc)
-poll_interval = 60
+poll_interval = 5*60
 etag = None
 
 while True:
@@ -23,7 +23,7 @@ while True:
     eventsreq = requests.get('https://api.github.com/orgs/discord/events', headers=gh_headers if not etag else {**gh_headers, 'If-None-Match': etag})
     print('Status', eventsreq.status_code)
 
-    poll_interval = max(int(eventsreq.headers.get('X-Poll-Interval', 60)), 60)
+    poll_interval = max(int(eventsreq.headers.get('X-Poll-Interval', 5*60)), 5*60)
 
     if eventsreq.status_code == 304:
         print('No new events, sleeping for', poll_interval)
