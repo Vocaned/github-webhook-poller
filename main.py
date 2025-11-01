@@ -147,7 +147,7 @@ while True:
                 'compare': f'https://github.com/{event['repo']['full_name']}/compare/{event['payload']['before']}...{event['payload']['head']}',
                 'created': False, # where to find this?
                 'deleted': False, # where to find this?
-                'forced': False, # This could be derived from `commits['status'] == 'diverged'`, however discord doesn't show commit details on force pushes, so for now it's always disabled.
+                'forced': commits['status'] == 'diverged',
                 'head_commit': commitlist[0], # is this correct?
                 'pusher': {
                     'name': event['actor']['display_login'],
