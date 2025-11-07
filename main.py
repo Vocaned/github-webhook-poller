@@ -147,7 +147,7 @@ while True:
                 'compare': f'https://github.com/{event['repo']['full_name']}/compare/{event['payload']['before']}...{event['payload']['head']}',
                 'created': False, # where to find this?
                 'deleted': False, # where to find this?
-                'forced': commits['status'] == 'diverged',
+                'forced': commits['status'] == 'diverged', # are there situations where branches diverge outside of force pushing?
                 'head_commit': commitlist[0], # is this correct?
                 'pusher': {
                     'name': event['actor']['display_login'],
