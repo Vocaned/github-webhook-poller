@@ -20,7 +20,7 @@ etag = None
 
 while True:
     print(f'Fetching with etag {etag}')
-    eventsreq = requests.get('https://api.github.com/orgs/discord/events', headers=gh_headers if not etag else {**gh_headers, 'If-None-Match': etag})
+    eventsreq = requests.get(config['EVENT_API'], headers=gh_headers if not etag else {**gh_headers, 'If-None-Match': etag})
     print('Status', eventsreq.status_code)
 
     poll_interval = max(int(eventsreq.headers.get('X-Poll-Interval', 5*60)), 5*60)
