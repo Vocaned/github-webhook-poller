@@ -99,6 +99,11 @@ while True:
             print('Blacklisted event type', event_type)
             continue
 
+        if config['USER_WHITELIST']:
+            if event['actor']['login'] not in config['USER_WHITELIST']:
+                print('Unwhitelisted user login', event['actor']['login'])
+                continue
+
         data = {
             **event['payload'],
             'repository': event['repo'],
