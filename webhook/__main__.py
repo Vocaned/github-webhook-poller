@@ -4,7 +4,7 @@ import sys
 from dataclasses import dataclass
 from collections import deque
 from typing import Any
-from config import Config
+from .config import Config
 
 @dataclass(frozen=True)
 class PollResponse:
