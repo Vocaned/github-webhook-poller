@@ -40,22 +40,6 @@ class Webhook:
                 continue
             self.seen_events.append(event['id']) # TODO: Should this be moved to the bottom when the webhook is actually sent, so errors will retry events
 
-            # TODO: Refresh repo caches every once in a while
-            if 'repo' in event:
-                if event['repo']['id'] not in self.repo_cache:
-                    reporeq = requests.get(event['repo']['url'], headers=self.gh_headers)
-                    if reporeq.status_code != 200:
-                        raise Exception(f'Failed to fetch repo at {event["repo"]["url"]} ({reporeq.status_code}): {reporeq.text}')
-                    repo = reporeq.json()
-                    self.repo_cache[event['repo']['id']] = repo
-                    event['repo'] = repo
-                else:
-                    event['repo'] = self.repo_cache[event['repo']['id']]
-
-                if event['repo']['full_name'] in config.REPO_BLACKLIST:
-                    print('Skipping blacklisted repo', event['repo']['full_name'])
-                    continue
-
             # Really we should be fetching the user object here
             # However, the only new property Discord needs is html_url, which can be derived from the partial user
             event['actor']['html_url'] = event['actor']['url'].replace('api.github.com/users', 'github.com')
@@ -95,6 +79,23 @@ class Webhook:
                     print('Unwhitelisted user login', event['actor']['login'])
                     continue
 
+            # TODO: Refresh repo caches every once in a while
+            if 'repo' in event:
+                if event['repo']['id'] not in self.repo_cache:
+                    reporeq = requests.get(event['repo']['url'], headers=self.gh_headers)
+                    if reporeq.status_code != 200:
+                        print(f'Failed to fetch repo at {event["repo"]["url"]} ({reporeq.status_code}): {reporeq.text}')
+                        continue
+                    repo = reporeq.json()
+                    self.repo_cache[event['repo']['id']] = repo
+                    event['repo'] = repo
+                else:
+                    event['repo'] = self.repo_cache[event['repo']['id']]
+
+                if event['repo']['full_name'] in config.REPO_BLACKLIST:
+                    print('Skipping blacklisted repo', event['repo']['full_name'])
+                    continue
+
             data = {
                 **event['payload'],
                 'repository': event['repo'],
@@ -118,12 +119,7 @@ class Webhook:
                 data['action'] = actionmap.get(event['payload']['action'], 'submitted')
 
             if event_type == 'fork':
-                # TODO: Do we need to check if the repo exists in the cache (probably not since it'll be brand new)
-                # TODO: Should repo fetching be turned into a separate function as it's done above as well
-                reporeq = requests.get(event['repo']['url'], headers=self.gh_headers)
-                if reporeq.status_code != 200:
-                    raise Exception(f'Failed to fetch repo at {event["repo"]["url"]} ({reporeq.status_code}): {reporeq.text}')
-                repo = reporeq.json()['parent']
+                repo = self.repo_cache[event['repo']['id']]['parent']
 
             if event_type == 'push':
                 commitsreq = requests.get(f"https://api.github.com/repos/{event['repo']['full_name']}/compare/{event['payload']['before']}...{event['payload']['head']}", headers=self.gh_headers)
@@ -173,11 +169,15 @@ if __name__ == '__main__':
     # Do we instead want to store the events already seen in an external file and process the rest?
     etag = None
     while True:
-        pollresponse = webhook.poll(etag)
-        webhook.first_run = False
-        etag = pollresponse.etag
-        # This is going to sleep for longer than the specified poll_interval, as sending the webhooks to discord already took some time not accounted for.
-        # For our purposes this doesn't really matter
-        print('Sleeping for', pollresponse.poll_interval)
-        time.sleep(pollresponse.poll_interval)
+        try:
+            pollresponse = webhook.poll(etag)
+            webhook.first_run = False
+            etag = pollresponse.etag
+            # This is going to sleep for longer than the specified poll_interval, as sending the webhooks to discord already took some time not accounted for.
+            # For our purposes this doesn't really matter
+            print('Sleeping for', pollresponse.poll_interval)
+            time.sleep(pollresponse.poll_interval)
+        except Exception as e:
+            print(e)
+            time.sleep(config.POLL_INTERVAL)
 
