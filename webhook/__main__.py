@@ -18,6 +18,7 @@ class Webhook:
             'Authorization': f'Bearer {config.GH_TOKEN}'
         }
         self.seen_events = deque(maxlen=300)
+        self.first_run = True
 
     def poll(self, etag: str | None) -> PollResponse:
         print(f'Fetching with etag {etag}')
@@ -156,8 +157,11 @@ class Webhook:
                 'User-Agent': 'GitHub-Hookshot/totallyrealwebhook',
             }
 
-            r = requests.post(config.DISCORD_WEBHOOK, json=data, headers=webhook_headers)
-            print(f'Sent {event_type} -> {r.status_code}: {r.text}')
+            if self.first_run:
+                print(f'Skipped on first run {event_type}')
+            else:
+                r = requests.post(config.DISCORD_WEBHOOK, json=data, headers=webhook_headers)
+                print(f'Sent {event_type} -> {r.status_code}: {r.text}')
 
         return PollResponse(etag, poll_interval)
 
@@ -165,11 +169,12 @@ if __name__ == '__main__':
     config = Config.from_toml('config.toml')
     webhook = Webhook(config)
 
-    # TODO: Right now events that happened while the bot was down might be resent. Do we want this,
-    # or should we lose events while bot is down, or do we store the events already seen and process the rest?
+    # TODO: Right now events that happened while the bot was down are lost.
+    # Do we instead want to store the events already seen in an external file and process the rest?
     etag = None
     while True:
         pollresponse = webhook.poll(etag)
+        webhook.first_run = False
         etag = pollresponse.etag
         # This is going to sleep for longer than the specified poll_interval, as sending the webhooks to discord already took some time not accounted for.
         # For our purposes this doesn't really matter
