@@ -20,6 +20,21 @@ class Webhook:
         self.seen_events = deque(maxlen=300)
         self.first_run = True
 
+    def write_state(self) -> None:
+        try:
+            with open('.state', 'w') as f:
+                f.write(str(round(time.time())))
+        except Exception as e:
+            print(f'Failed to write state. {type(e)}')
+
+    def read_state(self) -> int:
+        try:
+            with open('.state') as f:
+                return int(f.read().strip())
+        except Exception as e:
+            print(f'Failed to read state. {type(e)}')
+            return 0
+
     def poll(self, etag: str | None) -> PollResponse:
         print(f'Fetching with etag {etag}')
         eventsreq = requests.get(config.EVENT_API, headers=self.gh_headers if not etag else {**self.gh_headers, 'If-None-Match': etag})
@@ -35,10 +50,18 @@ class Webhook:
 
         etag = eventsreq.headers.get('ETag', None)
 
+        old_state = 0
+        if self.first_run:
+            old_state = self.read_state()
+
         for event in eventsreq.json()[::-1]:
             if event['id'] in self.seen_events:
                 continue
             self.seen_events.append(event['id']) # TODO: Should this be moved to the bottom when the webhook is actually sent, so errors will retry events
+
+            if self.first_run and old_state:
+                if round(time.time()) < old_state:
+                    continue # This event happened while the script was last running; skip event as it's most likely already sent.
 
             # Really we should be fetching the user object here
             # However, the only new property Discord needs is html_url, which can be derived from the partial user
@@ -159,19 +182,18 @@ class Webhook:
                 r = requests.post(config.DISCORD_WEBHOOK, json=data, headers=webhook_headers)
                 print(f'Sent {event_type} -> {r.status_code}: {r.text}')
 
+        self.first_run = False
+        self.write_state()
         return PollResponse(etag, poll_interval)
 
 if __name__ == '__main__':
     config = Config.from_toml('config.toml')
     webhook = Webhook(config)
 
-    # TODO: Right now events that happened while the bot was down are lost.
-    # Do we instead want to store the events already seen in an external file and process the rest?
     etag = None
     while True:
         try:
             pollresponse = webhook.poll(etag)
-            webhook.first_run = False
             etag = pollresponse.etag
             # This is going to sleep for longer than the specified poll_interval, as sending the webhooks to discord already took some time not accounted for.
             # For our purposes this doesn't really matter
