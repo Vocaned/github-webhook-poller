@@ -1,6 +1,7 @@
 import requests
 import time
 import sys
+from datetime import datetime
 from dataclasses import dataclass
 from collections import deque
 from typing import Any
@@ -60,7 +61,7 @@ class Webhook:
             self.seen_events.append(event['id']) # TODO: Should this be moved to the bottom when the webhook is actually sent, so errors will retry events
 
             if self.first_run and old_state:
-                if round(time.time()) < old_state:
+                if round(datetime.fromisoformat(event['created_at']).timestamp()) < old_state:
                     continue # This event happened while the script was last running; skip event as it's most likely already sent.
 
             # Really we should be fetching the user object here
