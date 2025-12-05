@@ -176,11 +176,8 @@ class Webhook:
                 'User-Agent': 'GitHub-Hookshot/totallyrealwebhook',
             }
 
-            if self.first_run:
-                print(f'Skipped on first run {event_type}')
-            else:
-                r = requests.post(config.DISCORD_WEBHOOK, json=data, headers=webhook_headers)
-                print(f'Sent {event_type} -> {r.status_code}: {r.text}')
+            r = requests.post(config.DISCORD_WEBHOOK, json=data, headers=webhook_headers)
+            print(f'Sent {event_type} -> {r.status_code}: {r.text}')
 
         self.first_run = False
         self.write_state()
