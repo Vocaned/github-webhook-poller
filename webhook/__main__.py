@@ -73,9 +73,9 @@ class Webhook:
                 'CreateEvent': 'create',
                 'DeleteEvent': 'delete',
                 'DiscussionEvent': 'discussion',
-                ...: 'discussion_comment', # Where will I get this data
-                'ForkEvent': 'fork', # Wrong repo shown in Discord, github api doesn't show origin repo details
-                # 'GollumEvent': 'gollum', # Not implemented by Discord
+                ...: 'discussion_comment', # Where can we get this data??
+                'ForkEvent': 'fork',
+                'GollumEvent': 'gollum', # Not implemented by Discord
                 'IssueCommentEvent': 'issue_comment',
                 'IssuesEvent': 'issues',
                 'MemberEvent': 'member',
@@ -171,7 +171,7 @@ class Webhook:
                     'sender': event['actor']
                 }
 
-            # TODO: should this be moved into the loop in __main__, rather than in the gh api class
+            # TODO: this should be moved into the loop in __main__, rather than in the gh api class
             webhook_headers = {
                 'X-GitHub-Event': event_type,
                 'User-Agent': 'GitHub-Hookshot/totallyrealwebhook',
