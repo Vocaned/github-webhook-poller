@@ -30,12 +30,14 @@ This script polls the GitHub Events API and forwards the events to a Discord Web
    Edit it to contain the following details:
 
    - `EVENT_API`: The GitHub API endpoint to poll.
-     - For a user's activity: `https://api.github.com/users/USERNAME/received_events` (events seen by the user) or `https://api.github.com/users/USERNAME/events` (events performed by the user).
+     - For an user's activity: `https://api.github.com/users/USERNAME/received_events` (events seen by the user) or `https://api.github.com/users/USERNAME/events` (events performed by the user).
      - For an organization: `https://api.github.com/orgs/ORG/events`.
+     - For a repo: `https://api.github.com/repos/USERNAME/REPO/events`.
+
    - `POLL_INTERVAL`: Time in seconds between checks. May be overridden to respects GitHub's `X-Poll-Interval` header.
    - `GH_TOKEN`: A GitHub Personal Access Token. Required to avoid strict ratelimits, and/or to access private repositories if configured to.
-   - `DISCORD_WEBHOOK`: The URL of the Discord Webhook where events will be sent.
-   - `REPO_BLACKLIST`: A list of repository full names (e.g., `["owner/repo"]`) to ignore.
+   - `DISCORD_WEBHOOK`: The URL of the Webhook where events will be sent. The webhook will be mimicking a GitHub webhook: For Discord, use `/github` endpoint rather than standard webhooks.
+   - `REPO_BLACKLIST`: A list of repository full names to ignore (e.g., `["owner/repo"]`).
    - `EVENT_BLACKLIST`: A list of event types to ignore (e.g., `["WatchEvent", "ForkEvent"]`).
    - `USER_WHITELIST`: A list of usernames. If set, only events triggered by these users will be forwarded.
 

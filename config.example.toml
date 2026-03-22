@@ -1,7 +1,7 @@
-EVENT_API = 'https://api.github.com/repos/vocaned/webhook/events'
+EVENT_API = 'https://api.github.com/repos/vocaned/github-webhook-poller/events'
 POLL_INTERVAL = 300 # In seconds. Minimum poll interval is dynamically returned by GitHub API and will override this if the value is set too low (usually 60 seconds during normal server load)
 GH_TOKEN = ''
-DISCORD_WEBHOOK = ''
+DISCORD_WEBHOOK = 'https://discord.com/api/webhooks/123/456/github'
 
 REPO_BLACKLIST = [ ]
 EVENT_BLACKLIST = [ ]
